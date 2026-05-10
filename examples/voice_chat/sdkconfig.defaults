@@ -365,4 +365,4 @@ CONFIG_LV_BUILD_DEMOS=n
 CONFIG_IDF_EXPERIMENTAL_FEATURES=y
 
 # Local relay — plain LAN, no TLS (see components/agent/priv_include/esp_agent_internal.h)
-CONFIG_ESP_AGENT_API_ENDPOINT="zomni.lan:8765"
+CONFIG_ESP_AGENT_API_ENDPOINT="zomni.local:8765"
