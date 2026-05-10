@@ -363,3 +363,6 @@ CONFIG_LV_BUILD_DEMOS=n
 # end of LVGL configuration
 # end of Component config
 CONFIG_IDF_EXPERIMENTAL_FEATURES=y
+
+# Local relay — plain LAN, no TLS (see components/agent/priv_include/esp_agent_internal.h)
+CONFIG_ESP_AGENT_API_ENDPOINT="zomni.local:8765"

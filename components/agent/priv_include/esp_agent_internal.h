@@ -17,7 +17,7 @@ extern "C" {
 
 ESP_EVENT_DECLARE_BASE(AGENT_EVENT);
 
-#define ESP_AGENT_API_USE_TLS 1
+#define ESP_AGENT_API_USE_TLS 0  /* plain HTTP/WS for local LAN relay */
 
 /* Event group bits for task stop signals */
 #define MESSAGE_TASK_STOP_BIT BIT0
