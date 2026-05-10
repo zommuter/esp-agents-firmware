@@ -203,11 +203,7 @@ void device_process_event(app_device_event_t event, void *data)
             break;
 
         case DEVICE_EVENT_SPEECH_START:
-            /* Send dummy audio data */
-            if (g_device_data.state == DEVICE_STATE_IDLE) {
-                break;
-            }
-
+            /* Always start speaker — response may arrive after device went idle on VAD timeout */
             device_perform_action(DEVICE_ACTION_MICROPHONE_PAUSE);
             device_perform_action(DEVICE_ACTION_SPEAKER_START);
             device_perform_action(DEVICE_ACTION_SLEEP_TIMER_STOP);
