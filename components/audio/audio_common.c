@@ -131,7 +131,7 @@ static esp_gmf_afe_manager_handle_t pool_setup_afe(const char *input_format, esp
 
     esp_gmf_element_handle_t ai_afe = NULL;
     esp_gmf_afe_cfg_t ai_afe_cfg = DEFAULT_GMF_AFE_CFG(gmf_afe_manager, NULL, NULL, models);
-    ai_afe_cfg.wakeup_end = 15 * 1000; // 15 seconds
+    ai_afe_cfg.wakeup_end = 1500; // 1.5 s post-VAD_END silence threshold (was 15 s)
 
     err = esp_gmf_afe_init(&ai_afe_cfg, &ai_afe);
     if (err != ESP_GMF_ERR_OK) {

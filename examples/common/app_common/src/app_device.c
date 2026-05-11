@@ -78,6 +78,7 @@ extern const uint8_t finish_reminder_mp3_end[] asm("_binary_finish_reminder_mp3_
 static void device_sleep_timer_callback(void *arg)
 {
     /* AFE doesn't emit wakeup_end event when manually triggered */
+    ESP_LOGI(TAG, "sleep_timer fired (app-side 15 s cap)");
     app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
     app_audio_trigger_sleep();
 }

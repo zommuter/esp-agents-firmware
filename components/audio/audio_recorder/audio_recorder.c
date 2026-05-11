@@ -60,11 +60,11 @@ static void esp_gmf_afe_event_cb(esp_gmf_obj_handle_t obj, esp_gmf_afe_evt_t *ev
         break;
     case ESP_GMF_AFE_EVT_VAD_START:
         recorder_event = AUDIO_RECORDER_EVENT_VAD_START;
-        // ESP_LOGI(TAG, "VAD_START");
+        ESP_LOGI(TAG, "VAD_START");
         break;
     case ESP_GMF_AFE_EVT_VAD_END:
         recorder_event = AUDIO_RECORDER_EVENT_VAD_END;
-        // ESP_LOGI(TAG, "VAD_END");
+        ESP_LOGI(TAG, "VAD_END");
         break;
     default:
         ESP_LOGW(TAG, "Unknown event: %d", event->type);
@@ -454,6 +454,7 @@ esp_err_t audio_recorder_stay_awake(audio_recorder_handle_t handle, bool awake)
 
 esp_err_t audio_recorder_trigger_sleep(audio_recorder_handle_t handle)
 {
+    ESP_LOGI(TAG, "trigger_sleep called");
     if (handle == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
