@@ -254,15 +254,14 @@ void device_process_event(app_device_event_t event, void *data)
             device_notify_state_changed(APP_DEVICE_SYSTEM_STATE_LISTENING);
             break;
 
-        case DEVICE_EVENT_SLEEP: {
-            /* data != NULL means VAD detected speech this turn — relay will respond immediately,
-               so skip the wakeup_end chime to avoid it playing over the relay's audio_stream_start */
-            bool speech_was_detected = (bool)(uintptr_t)data;
+        case DEVICE_EVENT_SLEEP:
             device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "Zzzz...");
             device_perform_action(DEVICE_ACTION_MICROPHONE_STOP);
             device_perform_action(DEVICE_ACTION_SLEEP_TIMER_STOP);
 
-            if (g_device_data.state != DEVICE_STATE_IDLE && !speech_was_detected) {
+            /* Skip wakeup_end chime when VAD detected speech — relay will respond immediately
+               with audio_stream_start; chime would play over the relay response */
+            if (g_device_data.state != DEVICE_STATE_IDLE && !app_audio_speech_was_detected()) {
                 app_audio_play_media_async("embed://audio/0_wakeup_end.mp3", wakeup_end_mp3_start, wakeup_end_mp3_end - wakeup_end_mp3_start);
             }
 
@@ -271,7 +270,6 @@ void device_process_event(app_device_event_t event, void *data)
             device_notify_state_changed(APP_DEVICE_SYSTEM_STATE_SLEEP);
             g_device_data.state = DEVICE_STATE_IDLE;
             break;
-        }
 
         case DEVICE_EVENT_INTERRUPT:
             if (g_device_data.state == DEVICE_STATE_LISTENING) {

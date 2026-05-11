@@ -160,9 +160,7 @@ static void audio_recorder_event_handler(audio_recorder_handle_t handle, audio_r
             s_vad_speech_detected = true;
             break;
         case AUDIO_RECORDER_EVENT_WAKEUP_END:
-            /* pass speech-detected flag as data so DEVICE_EVENT_SLEEP can suppress the
-               wakeup_end chime when the relay is about to respond */
-            app_device_event_enqueue(DEVICE_EVENT_SLEEP, (void *)(uintptr_t)s_vad_speech_detected);
+            app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
             break;
         default:
             break;
@@ -469,4 +467,9 @@ esp_err_t app_audio_play_media_sync(const char *media_url, const uint8_t *data, 
 esp_err_t app_audio_play_media_async(const char *media_url, const uint8_t *data, size_t data_len)
 {
     return audio_playback_play_media_async(g_app_audio_data.playback_handle, media_url, data, data_len);
+}
+
+bool app_audio_speech_was_detected(void)
+{
+    return s_vad_speech_detected;
 }

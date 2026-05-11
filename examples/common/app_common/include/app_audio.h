@@ -62,3 +62,10 @@ esp_err_t app_audio_play_media_async(const char *media_url, const uint8_t *data,
 esp_err_t app_audio_trigger_sleep(void);
 
 esp_err_t app_audio_set_awake(bool awake);
+
+/**
+ * @brief Returns true if VAD detected speech during the current wake session.
+ * Reset to false on each new WAKEUP_START event.
+ * Used by app_device to suppress the wakeup_end chime when the relay will respond.
+ */
+bool app_audio_speech_was_detected(void);
