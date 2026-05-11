@@ -240,8 +240,8 @@ void device_process_event(app_device_event_t event, void *data)
 
             if (g_device_data.state == DEVICE_STATE_IDLE){
                 app_audio_play_media_async("embed://audio/0_wakeup.mp3", wakeup_mp3_start, wakeup_mp3_end - wakeup_mp3_start);
-                app_agent_speech_conversation_start();
             }
+            app_agent_speech_conversation_start();
 
             device_perform_action(DEVICE_ACTION_SPEAKER_STOP);
             device_perform_action(DEVICE_ACTION_MICROPHONE_START);
