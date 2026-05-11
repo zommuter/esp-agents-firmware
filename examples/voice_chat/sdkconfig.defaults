@@ -366,3 +366,6 @@ CONFIG_IDF_EXPERIMENTAL_FEATURES=y
 
 # Local relay — plain LAN, no TLS (see components/agent/priv_include/esp_agent_internal.h)
 CONFIG_ESP_AGENT_API_ENDPOINT="zomni.local:8765"
+
+# Enable AEC so mic does not pick up the speaker output during TTS playback
+CONFIG_ENABLE_AEC=y
