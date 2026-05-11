@@ -146,14 +146,23 @@ static esp_err_t register_audio_commands()
     return agent_console_register_command(&cmd);
 }
 
+static bool s_vad_speech_detected = false;
+
 static void audio_recorder_event_handler(audio_recorder_handle_t handle, audio_recorder_event_t event, void *user_data)
 {
     switch (event) {
         case AUDIO_RECORDER_EVENT_WAKEUP_START:
+            s_vad_speech_detected = false;
             app_device_event_enqueue(DEVICE_EVENT_WAKEUP, NULL);
             break;
+        case AUDIO_RECORDER_EVENT_VAD_START:
+            ESP_LOGI(TAG, "VAD_START");
+            s_vad_speech_detected = true;
+            break;
         case AUDIO_RECORDER_EVENT_WAKEUP_END:
-            app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
+            /* pass speech-detected flag as data so DEVICE_EVENT_SLEEP can suppress the
+               wakeup_end chime when the relay is about to respond */
+            app_device_event_enqueue(DEVICE_EVENT_SLEEP, (void *)(uintptr_t)s_vad_speech_detected);
             break;
         default:
             break;
