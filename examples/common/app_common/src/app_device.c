@@ -238,6 +238,10 @@ void device_process_event(app_device_event_t event, void *data)
                 break;
             }
 
+            /* Reset per-LISTENING-window speech flag so the chime gate in DEVICE_EVENT_SLEEP
+               reflects speech detected in THIS window, not a prior turn's VAD_START. */
+            app_audio_reset_speech_detected();
+
             if (g_device_data.state == DEVICE_STATE_IDLE){
                 app_audio_play_media_async("embed://audio/0_wakeup.mp3", wakeup_mp3_start, wakeup_mp3_end - wakeup_mp3_start);
             }

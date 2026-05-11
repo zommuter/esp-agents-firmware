@@ -65,7 +65,14 @@ esp_err_t app_audio_set_awake(bool awake);
 
 /**
  * @brief Returns true if VAD detected speech during the current wake session.
- * Reset to false on each new WAKEUP_START event.
+ * Reset to false on each new WAKEUP_START or DEVICE_EVENT_WAKEUP event.
  * Used by app_device to suppress the wakeup_end chime when the relay will respond.
  */
 bool app_audio_speech_was_detected(void);
+
+/**
+ * Reset the VAD speech-detected flag to false.
+ * Call at the start of each new LISTENING window (DEVICE_EVENT_WAKEUP handler)
+ * so the chime gate reflects THIS window's speech activity, not a prior session's.
+ */
+void app_audio_reset_speech_detected(void);

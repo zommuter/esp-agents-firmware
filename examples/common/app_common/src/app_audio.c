@@ -147,6 +147,7 @@ static esp_err_t register_audio_commands()
 }
 
 static bool s_vad_speech_detected = false;
+static int  s_frames_played = 0;       /* reset on speaker_start; counts frames written to playback */
 
 static void audio_recorder_event_handler(audio_recorder_handle_t handle, audio_recorder_event_t event, void *user_data)
 {
@@ -311,9 +312,16 @@ void download_complete_task(void *arg)
 
         vTaskDelay(pdMS_TO_TICKS(100));
 
-        ESP_LOGI(TAG, "Speaker playback complete");
-        g_app_audio_data.audio_playback_complete = true;
-        app_device_event_enqueue(DEVICE_EVENT_SPEECH_PLAYBACK_COMPLETE, NULL);
+        if (s_frames_played == 0) {
+            /* Zero frames written — relay sent start+end with no audio data.
+               Transition to IDLE via SLEEP instead of looping back to LISTENING. */
+            ESP_LOGI(TAG, "Speaker download complete, 0 frames played — transitioning to SLEEP");
+            app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
+        } else {
+            ESP_LOGI(TAG, "Speaker playback complete (%d frames)", s_frames_played);
+            g_app_audio_data.audio_playback_complete = true;
+            app_device_event_enqueue(DEVICE_EVENT_SPEECH_PLAYBACK_COMPLETE, NULL);
+        }
     }
 
     vTaskDelete(NULL);
@@ -380,7 +388,11 @@ esp_err_t app_audio_play_speech(uint8_t *data, size_t data_len)
         return ESP_OK;
     }
 
-    return audio_playback_write(g_app_audio_data.playback_handle, data, data_len);
+    esp_err_t ret = audio_playback_write(g_app_audio_data.playback_handle, data, data_len);
+    if (ret == ESP_OK) {
+        s_frames_played++;
+    }
+    return ret;
 }
 
 
@@ -428,6 +440,7 @@ esp_err_t app_audio_speaker_start(void)
     ESP_LOGI(TAG, "Starting speaker");
     g_app_audio_data.speaker_active = true;
     g_app_audio_data.audio_playback_complete = false;
+    s_frames_played = 0;
 
     return ESP_OK;
 }
@@ -472,4 +485,9 @@ esp_err_t app_audio_play_media_async(const char *media_url, const uint8_t *data,
 bool app_audio_speech_was_detected(void)
 {
     return s_vad_speech_detected;
+}
+
+void app_audio_reset_speech_detected(void)
+{
+    s_vad_speech_detected = false;
 }
