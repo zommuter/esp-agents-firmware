@@ -77,8 +77,14 @@ extern const uint8_t finish_reminder_mp3_end[] asm("_binary_finish_reminder_mp3_
 
 static void device_sleep_timer_callback(void *arg)
 {
+    /* If speech was detected this LISTENING window, let WAKEUP_END handle natural
+       end-of-utterance — restart timer rather than cutting the user off mid-speech. */
+    if (app_audio_speech_was_detected()) {
+        esp_timer_start_once(g_device_data.sleep_timer, AGENT_SLEEP_TIMEOUT_SECONDS * 1000000ULL);
+        return;
+    }
     /* AFE doesn't emit wakeup_end event when manually triggered */
-    ESP_LOGI(TAG, "sleep_timer fired (app-side 15 s cap)");
+    ESP_LOGI(TAG, "sleep_timer fired (app-side %d s cap)", AGENT_SLEEP_TIMEOUT_SECONDS);
     app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
     app_audio_trigger_sleep();
 }
@@ -268,13 +274,16 @@ void device_process_event(app_device_event_t event, void *data)
             break;
 
         case DEVICE_EVENT_SLEEP:
+            /* Drop duplicate SLEEP — timer fires DEVICE_EVENT_SLEEP then calls
+               app_audio_trigger_sleep() which fires WAKEUP_END → another SLEEP.
+               If already IDLE, all side-effects have already been applied. */
+            if (g_device_data.state == DEVICE_STATE_IDLE) {
+                break;
+            }
             /* Show processing indicator when speech was detected — relay will respond;
                only show Zzzz when genuinely going idle (timeout or touch dismiss). */
-            if (g_device_data.state != DEVICE_STATE_IDLE && app_audio_speech_was_detected()) {
-                device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "...");
-            } else {
-                device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "Zzzz...");
-            }
+            device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM,
+                app_audio_speech_was_detected() ? "..." : "Zzzz...");
             device_perform_action(DEVICE_ACTION_MICROPHONE_STOP);
             device_perform_action(DEVICE_ACTION_SLEEP_TIMER_STOP);
 
