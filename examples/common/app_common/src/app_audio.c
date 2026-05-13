@@ -196,7 +196,10 @@ static void audio_microphone_task(void *arg)
 
         if (err != ESP_OK) {
             ESP_LOGW(TAG, "Failed to send speech data: %s", esp_err_to_name(err));
-            app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
+            /* helferli: route through AFE so SLEEP fires after recorder stop */
+            if (app_audio_trigger_sleep() != ESP_OK) {
+                app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL); /* fallback if pipeline torn down */
+            }
         }
     }
 
@@ -468,7 +471,8 @@ esp_err_t app_audio_set_awake(bool awake)
 
 esp_err_t app_audio_trigger_sleep(void)
 {
-    /* AFE doesn't emit wakeup_end event when manually triggered */
+    /* AFE emits WAKEUP_END from ST_WAKEUP/SPEECHING/WAIT_FOR_SLEEP after consuming
+       ET_TRIGGER_SLEEP; no event fires from ST_IDLE. Async — one pipeline-frame latency. */
     return audio_recorder_trigger_sleep(g_app_audio_data.recorder_handle);
 }
 

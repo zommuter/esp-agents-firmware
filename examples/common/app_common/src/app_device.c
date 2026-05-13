@@ -83,9 +83,9 @@ static void device_sleep_timer_callback(void *arg)
         esp_timer_start_once(g_device_data.sleep_timer, AGENT_SLEEP_TIMEOUT_SECONDS * 1000000ULL);
         return;
     }
-    /* AFE doesn't emit wakeup_end event when manually triggered */
+    /* helferli: rely on AFE WAKEUP_END to enqueue SLEEP — avoids double-SLEEP that prior
+       point fixes were papering over with the IDLE early-return */
     ESP_LOGI(TAG, "sleep_timer fired (app-side %d s cap)", AGENT_SLEEP_TIMEOUT_SECONDS);
-    app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
     app_audio_trigger_sleep();
 }
 
@@ -301,7 +301,9 @@ void device_process_event(app_device_event_t event, void *data)
 
         case DEVICE_EVENT_INTERRUPT:
             if (g_device_data.state == DEVICE_STATE_LISTENING) {
-                app_device_event_enqueue(DEVICE_EVENT_SLEEP, NULL);
+                /* helferli: trigger AFE sleep; WAKEUP_END enqueues SLEEP after AFE confirms stop
+                   — prevents chime audio leaking into mic upload (touch-dismiss timing fix) */
+                app_audio_trigger_sleep();
             } else if (g_device_data.state == DEVICE_STATE_SPEAKING) {
                 device_perform_action(DEVICE_ACTION_SPEAKER_STOP);
                 app_device_event_enqueue(DEVICE_EVENT_SPEECH_END, NULL);
