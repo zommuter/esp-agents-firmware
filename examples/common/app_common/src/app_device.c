@@ -268,7 +268,13 @@ void device_process_event(app_device_event_t event, void *data)
             break;
 
         case DEVICE_EVENT_SLEEP:
-            device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "Zzzz...");
+            /* Show processing indicator when speech was detected — relay will respond;
+               only show Zzzz when genuinely going idle (timeout or touch dismiss). */
+            if (g_device_data.state != DEVICE_STATE_IDLE && app_audio_speech_was_detected()) {
+                device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "...");
+            } else {
+                device_set_text(APP_DEVICE_TEXT_TYPE_SYSTEM, "Zzzz...");
+            }
             device_perform_action(DEVICE_ACTION_MICROPHONE_STOP);
             device_perform_action(DEVICE_ACTION_SLEEP_TIMER_STOP);
 
