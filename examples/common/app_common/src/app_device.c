@@ -21,7 +21,7 @@
 static const char *TAG = "app_device";
 
 #define REMINDER_DISPLAY_TIMEOUT_SECONDS 5
-#define AGENT_SLEEP_TIMEOUT_SECONDS 15
+#define AGENT_SLEEP_TIMEOUT_SECONDS 5
 #define APP_DEVICE_MESSAGE_QUEUE_SIZE 20
 
 typedef enum {
