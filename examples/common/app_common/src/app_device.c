@@ -238,6 +238,15 @@ void device_process_event(app_device_event_t event, void *data)
                 break;
             }
 
+            /* Drop redundant WAKEUP if user audio stream is already open.
+               AFE WAKEUP_START (app_audio.c) and SPEECH_PLAYBACK_COMPLETE → WAKEUP can race
+               during post-TTS re-listen; without this guard the relay observes two consecutive
+               audio_stream_start messages without an intervening audio_stream_end. */
+            if (g_device_data.state == DEVICE_STATE_LISTENING) {
+                ESP_LOGW(TAG, "DEVICE_EVENT_WAKEUP dropped: already LISTENING");
+                break;
+            }
+
             /* Reset per-LISTENING-window speech flag so the chime gate in DEVICE_EVENT_SLEEP
                reflects speech detected in THIS window, not a prior turn's VAD_START. */
             app_audio_reset_speech_detected();
