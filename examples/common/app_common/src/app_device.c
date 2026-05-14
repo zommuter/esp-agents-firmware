@@ -249,6 +249,15 @@ void device_process_event(app_device_event_t event, void *data)
                 break;
             }
 
+            /* Drop WAKEUP while TTS is playing — AFE can re-trigger on the wake-word chime
+               echo during the LLM+TTS latency window; accepting it calls SPEAKER_STOP which
+               sets speaker_active=false, silently drops all incoming frames, and fires the
+               zero-frame SLEEP guard instead of PLAYBACK_COMPLETE. */
+            if (g_device_data.state == DEVICE_STATE_SPEAKING) {
+                ESP_LOGW(TAG, "DEVICE_EVENT_WAKEUP dropped: SPEAKING (TTS in progress)");
+                break;
+            }
+
             /* Drop redundant WAKEUP if user audio stream is already open.
                AFE WAKEUP_START (app_audio.c) and SPEECH_PLAYBACK_COMPLETE → WAKEUP can race
                during post-TTS re-listen; without this guard the relay observes two consecutive
