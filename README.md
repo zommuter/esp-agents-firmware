@@ -1,5 +1,7 @@
 # ESP Private Agents Firmware
 
+> **Fork note (Zommuter/helferli):** Active development happens on the [`helferli`](../../tree/helferli) branch — minimal local-relay patches (TLS off + mDNS endpoint). `main` mirrors upstream [`espressif/esp-agents-firmware`](https://github.com/espressif/esp-agents-firmware). Prior fork history preserved on `archive/2026-05-14-full-fork-state`.
+
 The ESP Private Agents Platform (<https://agents.espressif.com>) is a platform that allows building and hosting AI Agents for your organisation (more in the [blog](https://developer.espressif.com/blog/2025/12/annoucing_esp_private_agents_platform/)). The Agents Platform can be used to create conversational AI Agents that you can communicate with using an Espressif powered device. This repository contains the firmware SDK and examples that implement the device side features for communicating with these agents.
 
 ## Examples
