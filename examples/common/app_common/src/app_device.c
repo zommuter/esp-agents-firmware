@@ -22,6 +22,7 @@ static const char *TAG = "app_device";
 
 #define REMINDER_DISPLAY_TIMEOUT_SECONDS 5
 #define AGENT_SLEEP_TIMEOUT_SECONDS 5
+#define AGENT_SLEEP_TIMER_VAD_MAX_RESTARTS 2  /* hard cap: 5s + 2×5s = 15s regardless of VAD */
 #define APP_DEVICE_MESSAGE_QUEUE_SIZE 20
 
 typedef enum {
@@ -75,17 +76,21 @@ extern const uint8_t wakeup_end_mp3_end[] asm("_binary_wakeup_end_mp3_end");
 extern const uint8_t finish_reminder_mp3_start[] asm("_binary_finish_reminder_mp3_start");
 extern const uint8_t finish_reminder_mp3_end[] asm("_binary_finish_reminder_mp3_end");
 
+/* Counts VAD-guard restarts within the current LISTENING window; reset on DEVICE_EVENT_WAKEUP. */
+static int s_sleep_timer_vad_restarts = 0;
+
 static void device_sleep_timer_callback(void *arg)
 {
-    /* If speech was detected this LISTENING window, let WAKEUP_END handle natural
-       end-of-utterance — restart timer rather than cutting the user off mid-speech. */
-    if (app_audio_speech_was_detected()) {
+    /* While speech is detected, let WAKEUP_END handle natural end-of-utterance.
+       Cap restarts so ambient-noise VAD false-positives can't prevent timeout forever. */
+    if (app_audio_speech_was_detected() && s_sleep_timer_vad_restarts < AGENT_SLEEP_TIMER_VAD_MAX_RESTARTS) {
+        s_sleep_timer_vad_restarts++;
         esp_timer_start_once(g_device_data.sleep_timer, AGENT_SLEEP_TIMEOUT_SECONDS * 1000000ULL);
         return;
     }
-    /* helferli: rely on AFE WAKEUP_END to enqueue SLEEP — avoids double-SLEEP that prior
-       point fixes were papering over with the IDLE early-return */
-    ESP_LOGI(TAG, "sleep_timer fired (app-side %d s cap)", AGENT_SLEEP_TIMEOUT_SECONDS);
+    s_sleep_timer_vad_restarts = 0;
+    ESP_LOGI(TAG, "sleep_timer fired (app-side %d s cap, vad_restarts=%d)",
+             AGENT_SLEEP_TIMEOUT_SECONDS, s_sleep_timer_vad_restarts);
     app_audio_trigger_sleep();
 }
 
@@ -253,9 +258,9 @@ void device_process_event(app_device_event_t event, void *data)
                 break;
             }
 
-            /* Reset per-LISTENING-window speech flag so the chime gate in DEVICE_EVENT_SLEEP
-               reflects speech detected in THIS window, not a prior turn's VAD_START. */
+            /* Reset per-LISTENING-window state: speech flag and timer VAD-restart counter. */
             app_audio_reset_speech_detected();
+            s_sleep_timer_vad_restarts = 0;
 
             if (g_device_data.state == DEVICE_STATE_IDLE){
                 app_audio_play_media_async("embed://audio/0_wakeup.mp3", wakeup_mp3_start, wakeup_mp3_end - wakeup_mp3_start);
